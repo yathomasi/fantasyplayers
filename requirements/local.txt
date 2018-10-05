@@ -1,0 +1,5 @@
+# Local development dependencies go here
+
+-r base.txt
+Sphinx==1.2.2
+pylint==2.1.1

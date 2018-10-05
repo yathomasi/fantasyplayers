@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+
+{% block title %} Home {% endblock %}
+{% block content %}
+<div>
+    <div class="limiter">
+        <div class="container-table100">
+            <div class="wrap-table100">
+                <div class="table100">
+                    <div class="text-center">
+                        <h1>Welcome Home</h1>
+                        <p>Welcome to Fantasy, a website developed by <em>Bohemian Rhapsody</em>!</p>
+                        <br>
+                        
+                    </div>
+                    <div class="row">
+                            <div class="col-md-6">
+                    
+                                    <div class="text-center">
+                                            <h4>List of Players and Count</h4>
+                                    </div>
+                                   
+                                    <table class="table-scroll">
+                                        <thead>
+                                            <tr class="table100-head">
+                                                <th class="column1">Players</th>
+                                                <th class="column2">Count</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {% for player,count in listOfCountOfPlayersPicked %}
+                                            <tr>
+                                                <td class="column1"><strong>{{ player }}</strong></td>
+                                                <td class="column2">{{ count }}</td>
+                                            </tr>
+                                            {%endfor%}
+                                        </tbody>
+                                    </table>
+                                    </div>
+                    <div class=" col-md-6">
+                            <h4>List of Captain and Counts</h4>
+                        <table class>
+                        <thead>
+                            <tr class="table100-head">
+                                <th class="column1">Players</th>
+                                <th class="column2">Count</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for player,count in listOfCountOfCaptainsPicked %}
+                            <tr>
+                                <td class="column1"><strong>{{ player }}</strong></td>
+                                <td class="column2">{{ count }}</td>
+
+                            </tr>
+                            {% endfor%}
+                        </tbody>
+                    </table>
+                    </div>
+                    
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{%endblock%}

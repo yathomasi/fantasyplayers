@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block title %} Home {% endblock %}
+{% block container %}
+<div class="main-center">
+    <table>
+        <thead>
+            <tr>
+                <td>League ID</td>
+                <td>Gameweek</td>
+                <td>League Type</td>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>{{league}}</td>
+                <td>{{gameweek}}</td>
+                <td>{{leaguetype}}</td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{%endblock%}
