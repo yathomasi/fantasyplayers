@@ -2,7 +2,7 @@ from .base import *
 import dj_database_url
 # DEBUG = False
 
-ALLOWED_HOSTS = ['fantasyplayers.herokuapp.com', ] #DONE change with the site
+# ALLOWED_HOSTS = ['fantasyplayers.herokuapp.com', ] #DONE change with the site
 DEBUG = config('DEBUG', default=False, cast=bool)
 DATABASES = {
     'default': dj_database_url.config(
