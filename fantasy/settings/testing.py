@@ -1,6 +1,6 @@
 from .base import *
 
-DATABASES['default'] = {
+DATABASES= {
     'ENGINE': 'django.db.backends.sqlite3'
 }
 
