@@ -6,147 +6,47 @@ from django.http import HttpResponse
 # Create your views here.
 import requests
 import json
+from .fpl import writeFileToOutput, readFromFile, getLeagueName
+import logging, sys
+import os
 
-DIRNAME = "Data"
-FPL_URL = "https://fantasy.premierleague.com/drf/"
-USER_SUMMARY_SUBURL = "element-summary/"
-LEAGUE_CLASSIC_STANDING_SUBURL = "leagues-classic-standings/"
-LEAGUE_H2H_STANDING_SUBURL = "leagues-h2h-standings/"
-TEAM_ENTRY_SUBURL = "entry/"
-PLAYERS_INFO_SUBURL = "bootstrap-static"
-PLAYERS_INFO_FILENAME = "allPlayersInfo.json"
-
-
-USER_SUMMARY_URL = FPL_URL + USER_SUMMARY_SUBURL
-PLAYERS_INFO_URL = FPL_URL + PLAYERS_INFO_SUBURL
-START_PAGE = 1
-
-
-# Get users in league: https://fantasy.premierleague.com/drf/leagues-classic-standings/336217?phase=1&le-page=1&ls-page=5
-def getUserEntryIds(league_id, ls_page, league_Standing_Url):
-    league_url = league_Standing_Url + \
-        str(league_id) + "?phase=1&le-page=1&ls-page=" + str(ls_page)
-    r = requests.get(league_url)
-    jsonResponse = r.json()
-    leaguename = jsonResponse["league"]["name"]
-    standings = jsonResponse["standings"]["results"]
-    if not standings:
-        print("no more standings found!")
-        return None
-
-    entries = []
-
-    for player in standings:
-        entries.append(player["entry"])
-
-    return leaguename,entries
-
-# team picked by user. example: https://fantasy.premierleague.com/drf/entry/2677936/event/1/picks with 2677936 being entry_id of the player
-def getplayersPickedForEntryId(entry_id, GWNumber):
-    eventSubUrl = "event/" + str(GWNumber) + "/picks"
-    playerTeamUrlForSpecificGW = FPL_URL + \
-        TEAM_ENTRY_SUBURL + str(entry_id) + "/" + eventSubUrl
-    r = requests.get(playerTeamUrlForSpecificGW)
-    jsonResponse = r.json()
-    picks = jsonResponse["picks"]
-    # print(picks)
-    elements = []
-    captainId = 1
-    for pick in picks:
-        elements.append(pick["element"])
-        if pick["is_captain"]:
-            captainId = pick["element"]
-    return elements, captainId
-
+if not os.path.exists('output'):
+    os.mkdir('output')
+logging.basicConfig(stream=sys.stderr, level=logging.DEBUG)
 @csrf_exempt
 def index(request):
     if request.method == 'POST':
         #getting values from post
         league = request.POST.get('league')
         gameweek = request.POST.get('gw')
-        if request.POST.get('leaguetype')=='h2h':
-            leaguetype = 'h2h'
+        leaguetype = request.POST.get('leaguetype')
+
+        playersFile = "output/GW"+str(gameweek)+" Players " + str(league) + ".csv"
+        captainsFile = "output/GW"+str(gameweek)+" Captains " + str(league) + ".csv"
+        if os.path.exists(playersFile):
+            pass
         else:
-            leaguetype = 'classic'
-        try:
-            r = requests.get(PLAYERS_INFO_URL)
-            jsonResponse = r.json()
-        except Exception as e:
-                print(str(e))
-                context={
-                    'error1':"Some error occured. Please Try again"
-                }
-                return render(request, 'home/index.html',context)
-        # return HttpResponse(json.dumps(jsonResponse), content_type='application/json')
-        playerElementIdToNameMap = {}
-        allPlayers=json.loads(json.dumps(jsonResponse))
-        for element in allPlayers["elements"]:
-            playerElementIdToNameMap[element["id"]] = element["web_name"] #.encode('ascii', 'ignore')
-
-        countOfPlayersPicked = {}
-        countOfCaptainsPicked = {}
-        totalNumberOfPlayersCount = 0
-        pageCount = START_PAGE
-        leagueIdSelected = league
-        GWNumber = gameweek
-        if leaguetype == "h2h":
-            leagueStandingUrl = FPL_URL + LEAGUE_H2H_STANDING_SUBURL
-            print("h2h league mode")
-        elif leaguetype == 'classic':
-            leagueStandingUrl = FPL_URL + LEAGUE_CLASSIC_STANDING_SUBURL
-            print("classic league mode")
-        # leagueStandingUrl = FPL_URL + LEAGUE_CLASSIC_STANDING_SUBURL
-
-        while (True):
             try:
-                leaguename, entries = getUserEntryIds(
-                    leagueIdSelected, pageCount, leagueStandingUrl)
-                if entries is None:
-                    print("breaking as no more player entries")
-                    break
-
-                totalNumberOfPlayersCount += len(entries)
-                print("parsing pageCount: " + str(pageCount) + " with total number of players so far:" + str(
-                    totalNumberOfPlayersCount))
-                for entry in entries:
-                    elements, captainId = getplayersPickedForEntryId(entry, GWNumber)
-                    for element in elements:
-                        name = playerElementIdToNameMap[element]
-                        if name in countOfPlayersPicked:
-                            countOfPlayersPicked[name] += 1
-                        else:
-                            countOfPlayersPicked[name] = 1
-
-                    captainName = playerElementIdToNameMap[captainId]
-                    if captainName in countOfCaptainsPicked:
-                        countOfCaptainsPicked[captainName] += 1
-                    else:
-                        countOfCaptainsPicked[captainName] = 1
-
-                listOfCountOfPlayersPicked = sorted(
-                    countOfPlayersPicked.items(), key=lambda x: x[1], reverse=True)
-                
-                listOfCountOfCaptainsPicked = sorted(
-                    countOfCaptainsPicked.items(), key=lambda x: x[1], reverse=True)
-
-                pageCount += 1
+                writeFileToOutput(league, gameweek, leaguetype)
             except Exception as e:
-                print(str(e))
-                context={
-                    'error1':True
-                }
-                return render(request, 'home/index.html',context)
+                    print(str(e))
+                    context={
+                        'error1':"Some error occured. Please Try again"
+                    }
+                    return render(request, 'home/index.html', context)
+        
+        listOfCountOfPlayersPicked = readFromFile(playersFile)
+        listOfCountOfCaptainsPicked = readFromFile(captainsFile)
+        GWNumber = gameweek
+        leaguename = getLeagueName(league, leaguetype)
         context={
-            'listOfCountOfCaptainsPicked':listOfCountOfCaptainsPicked, 
-            'listOfCountOfPlayersPicked':listOfCountOfPlayersPicked,
-            'gwnumber':GWNumber,
-            'leaguename':leaguename,
+        'listOfCountOfCaptainsPicked':listOfCountOfCaptainsPicked, 
+        'listOfCountOfPlayersPicked':listOfCountOfPlayersPicked,
+        'gwnumber':GWNumber,
+        'leaguename':leaguename
         }
-        # print(listOfCountOfCaptainsPicked)
-        # print()
-        # print(listOfCountOfPlayersPicked)
-        # print('hakuna matatata')
         return render(request, 'home/showdata.html', context)
+        
 
     return render(request, 'home/index.html')
 
@@ -178,21 +78,6 @@ def testview(request):
     
     return render(request, 'home/index.html')
 
-# @csrf_exempt
-# def leagueform(request):
-#     if request.method == 'POST':
-#         form = LeagueForm(request.POST)
-
-#         if form.is_valid():
-#             context = {
-#                 'league': form.cleaned_data['league'],
-#                 'gameweek': form.cleaned_data['gameweek'],
-#                 }
-#             return render(request, 'home/showdata.html', context)
-#     else:
-#         form = LeagueForm()
-    
-#     return render(request, 'home/index.html', {'form': form})
 
 def tastyview(request):
     GWNumber=1
