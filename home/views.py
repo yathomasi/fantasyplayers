@@ -6,7 +6,7 @@ from django.http import HttpResponse
 # Create your views here.
 import requests
 import json
-from .fpl import writeFileToOutput, readFromFile, getLeagueName
+from home.fpl import writeFileToOutput, readFromFile, getLeagueName, eventStatus
 import logging, sys
 import os
 
@@ -47,8 +47,11 @@ def index(request):
         }
         return render(request, 'home/showdata.html', context)
         
-
-    return render(request, 'home/index.html')
+    lastGameweek = eventStatus()
+    context={
+        'lastGameweek':lastGameweek
+    }
+    return render(request, 'home/index.html', context)
 
 
 @csrf_exempt

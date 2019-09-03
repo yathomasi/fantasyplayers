@@ -35,10 +35,10 @@
             
         </div>
         <div class="form-group">
-            <label for="Gameweek">Enter Gameweek Number</label>
-            <input type="number" name="gw" class="form-control" id="gw" min=1 max=38 aria-describedby="gwHelp" placeholder="Enter Gameweek No" value="1" required="true">
+            <label for="Gameweek">Enter Gameweek Number(1-{{lastGameweek}})</label>
+            <input type="number" name="gw" class="form-control" id="gw" min=1 max={{lastGameweek}} aria-describedby="gwHelp" placeholder="Enter Gameweek No" value="1" required="true">
             <div class="invalid-feedback">
-                    Please Provide GameWeek Number (1-38)
+                    Please Provide GameWeek Number (1-{{lastGameweek}})
             </div>
         </div>
         <div class="form-group">
