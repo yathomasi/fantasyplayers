@@ -3,9 +3,12 @@ import json
 import csv
 import argparse
 import logging, sys
+from decouple import config
 
 FPL_URL = "https://fantasy.premierleague.com/api/"
 LOGIN_URL = "https://users.premierleague.com/accounts/login/"
+EVENT_URL = "https://fantasy.premierleague.com/api/event-status/"
+
 USER_SUMMARY_SUBURL = "element-summary/"
 LEAGUE_CLASSIC_STANDING_SUBURL = "leagues-classic/"
 LEAGUE_H2H_STANDING_SUBURL = "leagues-h2h/"
@@ -18,12 +21,33 @@ PLAYERS_INFO_URL = FPL_URL + PLAYERS_INFO_SUBURL
 START_PAGE = 1
 
 
+#Creating a session for authenticaion
+s = requests.session()
+username = config('FPL_USER')
+password = config('FPL_PASS')
+payload = {
+    'login':username,
+    'password':password,
+    'redirect_uri': 'https://fantasy.premierleague.com/',
+    'app':'plfpl-web'
+}
+s.post(LOGIN_URL, data=payload)
+
+
 # Download all player data: https://fantasy.premierleague.com/api/bootstrap-static/
 def getPlayersInfo():
-    r = requests.get(PLAYERS_INFO_URL)
+    r = s.get(PLAYERS_INFO_URL)
     jsonResponse = r.json()
     with open(PLAYERS_INFO_FILENAME, 'w') as outfile:
         json.dump(jsonResponse, outfile)
+
+
+def eventStatus():
+    r = s.get(EVENT_URL)
+    jsonResponse = r.json()
+    event = jsonResponse['status'][0]['event']
+    return event
+
 
 
 # Get users in league:
@@ -35,7 +59,7 @@ def getUserEntryIds(league_id, ls_page, league_Standing_Url):
             str(league_id) + "/standings/" + \
             "?page_new_entries=1&page_standings=" + str(ls_page) + "&phase=1"
         logging.info(league_url)
-        r = requests.get(league_url)
+        r = s.get(league_url)
         jsonResponse = r.json()
         managers = jsonResponse["standings"]["results"]
         if not managers:
@@ -58,7 +82,7 @@ def getLeagueName(league_id, leaguetype):
     league_url = leagueStandingUrl + \
             str(league_id) + "/standings/" + \
             "?page_new_entries=1&page_standings=" + str(ls_page) + "&phase=1"
-    r = requests.get(league_url)
+    r = s.get(league_url)
     jsonResponse = r.json()
     leagueName = jsonResponse['league']['name']
     return leagueName
@@ -70,7 +94,7 @@ def getplayersPickedForEntryId(entry_id, GWNumber):
     eventSubUrl = "event/" + str(GWNumber) + "/picks/"
     playerTeamUrlForSpecificGW = FPL_URL + \
         TEAM_ENTRY_SUBURL + str(entry_id) + "/" + eventSubUrl
-    r = requests.get(playerTeamUrlForSpecificGW)
+    r = s.get(playerTeamUrlForSpecificGW)
     jsonResponse = r.json()
     try:
         picks = jsonResponse["picks"]
@@ -149,7 +173,9 @@ def writeFileToOutput(league, gameweek, leaguetype, debug=False):
         print(err)
         return "error"
 
-
+    if len(entries)>100:
+        entries=entries[:100]
+        print("Taking just top 100 manager only")
     for entry in entries:
         try:
             elements, captainId = getplayersPickedForEntryId(entry, GWNumber)
