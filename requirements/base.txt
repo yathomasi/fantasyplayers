@@ -3,7 +3,7 @@ pytz==2018.5
 six==1.11.0
 requests==2.20.0
 
-django-debug-toolbar==1.10.1
+django-debug-toolbar==1.11.1
 
 psycopg2==2.7.5
 whitenoise==3.3.1  # https://github.com/evansd/whitenoise
