@@ -1,4 +1,4 @@
-Django==2.2.24
+Django==3.2.25
 pytz==2018.5
 six==1.11.0
 requests==2.20.0
